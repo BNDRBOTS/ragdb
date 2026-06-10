@@ -15,11 +15,21 @@ export default function LoginPage() {
     setStatus('loading')
     setErrorMessage('')
 
+    // Carry the post-auth destination (set by middleware as ?next=/path)
+    // through the magic-link round trip. Same-origin paths only.
+    const requestedNext = new URLSearchParams(window.location.search).get('next')
+    const next =
+      requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//')
+        ? requestedNext
+        : null
+
     const supabase = getBrowserClient()
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: next
+          ? `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`
+          : `${window.location.origin}/api/auth/callback`,
       },
     })
 
